@@ -3,7 +3,7 @@
     <link name="base_link">
         <visual>
             <geometry>
-                <box size="0.1 0.1 0.1"/>
+                <box size="0.01 0.01 0.01"/>
             </geometry>
             <material name="blue">
                 <color rgba="0 0 .8 1"/>
@@ -12,13 +12,13 @@
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <collision>
             <geometry>
-                <box size="0.1 0.1 0.1"/>
+                <box size="0.01 0.01 0.01"/>
             </geometry>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
         </collision>
         <inertial>
             <origin xyz="0 0 0" />
-            <mass value="100" />
+            <mass value="1000000" />
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
         </inertial>
     </link>
@@ -88,6 +88,7 @@
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
         </inertial>
     </link>
+
     <joint name="wall2base_link" type="fixed">
         <parent link="base_link"/>
         <child link="wall"/>
@@ -98,9 +99,33 @@
         <child link="joint"/>
         <origin xyz="0 -1 0" rpy="0 0 0"/>
     </joint>
-    <joint name="pole2joint" type="fixed">
+    <joint name="pole2joint" type="continuous">
         <parent link="joint"/>
         <child link="pole"/>
         <origin xyz="0 -1 0" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
     </joint>
+    <transmission name="pole_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <actuator name="pole_motors">
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </actuator>
+        <joint name="pole2joint">
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        </joint>
+    </transmission>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>/</robotNamespace>
+        </plugin>
+    </gazebo>
+    <gazebo>
+        <plugin name="fixed_plugin" filename="libgazebo_ros_link_attacher.so">
+            <robotNamespace>/</robotNamespace>
+            <fixed>true</fixed>  <!-- 设置为true可以固定模型 -->
+        </plugin>
+    </gazebo>
+
 </robot>
