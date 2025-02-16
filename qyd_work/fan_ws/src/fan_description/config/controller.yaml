@@ -1,4 +1,7 @@
 controller:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
   my_controller:
     type: my_controller/MyPositionController
     joint: pole2joint
