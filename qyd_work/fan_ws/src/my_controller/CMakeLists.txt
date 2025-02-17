@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   urdf
+        dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -96,10 +97,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
+ generate_dynamic_reconfigure_options(
+   cfg/PidConfig.cfg
 #   cfg/DynReconf2.cfg
-# )
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -113,7 +114,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES my_controller
-  CATKIN_DEPENDS angles control_msgs control_toolbox controller_interface forward_command_controller hardware_interface pluginlib realtime_tools roscpp std_msgs urdf
+  CATKIN_DEPENDS angles control_msgs control_toolbox controller_interface forward_command_controller hardware_interface pluginlib realtime_tools roscpp std_msgs urdf dynamic_reconfigure
 #  DEPENDS system_lib
 
 )

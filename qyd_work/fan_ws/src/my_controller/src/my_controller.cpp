@@ -9,6 +9,8 @@
 #include <std_msgs/Int64.h>  // 确保包含了该头文件
 #include <random>
 #include <cmath>
+#include <dynamic_reconfigure/server.h>
+#include <my_controller/my_controller_Config.h>
 
 namespace my_controller_ns
 {
@@ -62,6 +64,9 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     a_ = dist_a_(generator_);
     b_ = dist_b_(generator_);
     c_ = 2.090 - a_;
+    server = std::make_unique<dynamic_reconfigure::Server<my_controller::my_controller_Config>>(n);
+    f = boost::bind(&my_controller_ns::MyPositionController::callback, this, _1, _2);
+    server->setCallback(f);
 
     return true;
   }
@@ -73,6 +78,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     // time_zero_ = time_zero_ + duration_time;
 
     // 获取目标速度（通过前馈控制）
+    ROS_INFO("p : %f", kp_);
     double target_speed;
     double pre_target_speed;
     time_zero_ = ros::Time::now();
@@ -130,7 +136,13 @@ class MyPositionController : public controller_interface::Controller<hardware_in
   {
     speed_mode = msg->data;
   }
-
+  void callback(my_controller::my_controller_Config& config, uint32_t level)
+  {
+    kp_ = config.p;
+    ki_ = config.i;
+    kd_ = config.d;
+    ROS_INFO("Reconfigure Request:  %f ", kp_);
+  }
   void starting(const ros::Time& time)
   {
     time_zero_ = ros::Time::now();
@@ -163,6 +175,8 @@ private:
   double pre_target_speed;
   double target_speed;
   ros::Time prev_time;
+  std::unique_ptr<dynamic_reconfigure::Server<my_controller::my_controller_Config>> server;
+  dynamic_reconfigure::Server<my_controller::my_controller_Config>::CallbackType f;
 };
 
 PLUGINLIB_EXPORT_CLASS(my_controller_ns::MyPositionController, controller_interface::ControllerBase);
