@@ -93,6 +93,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     double error = target_speed - joint_.getVelocity();
     integral_ += error * period.toSec();
     double derivative = (error - prev_error_) / period.toSec();
+    prev_error_ = error;
 
     // 计算PID控制输出
     double pid_output = kp_ * error + ki_ * integral_ + kd_ * derivative;
