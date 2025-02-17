@@ -69,20 +69,21 @@ class MyPositionController : public controller_interface::Controller<hardware_in
   void update(const ros::Time& time, const ros::Duration& period)
   {
     // double elapsed_time = (time - start_time_).toSec();
-    ros::Duration duration_time(0.5);
-    time_zero_ = time_zero_ + duration_time;  //
+    // ros::Duration duration_time(0.5);
+    // time_zero_ = time_zero_ + duration_time;
 
     // 获取目标速度（通过前馈控制）
     double target_speed;
     double pre_target_speed;
+    time_zero_ = ros::Time::now();
     switch (speed_mode)
     {
       case 0:
 
         target_speed = computeTargetSpeed(time_zero_.toSec());
-        pre_target_speed = computeTargetSpeed((time_zero_ - duration_time).toSec());
+        pre_target_speed = computeTargetSpeed(prev_time.toSec());
 
-        time_zero_ = time_zero_ + duration_time;
+        prev_time = time_zero_;
         break;
       case 1:
         target_speed = M_PI / 3;
@@ -132,6 +133,8 @@ class MyPositionController : public controller_interface::Controller<hardware_in
 
   void starting(const ros::Time& time)
   {
+    time_zero_ = ros::Time::now();
+    prev_time = ros::Time::now();
   }
   void stopping(const ros::Time& time)
   {
@@ -159,6 +162,7 @@ private:
   ros::Time time_zero_;
   double pre_target_speed;
   double target_speed;
+  ros::Time prev_time;
 };
 
 PLUGINLIB_EXPORT_CLASS(my_controller_ns::MyPositionController, controller_interface::ControllerBase);
