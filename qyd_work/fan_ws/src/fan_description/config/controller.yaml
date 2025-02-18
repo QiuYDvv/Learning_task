@@ -6,5 +6,5 @@ controller:
     type: my_controller/MyPositionController
     joint: pole2joint
     feedforward_gain_: 0.1
-    use_feedforward: 1
+    use_feedforward: 0
     pid: { p: 10.0, i: 0.1, d: 0.01 }

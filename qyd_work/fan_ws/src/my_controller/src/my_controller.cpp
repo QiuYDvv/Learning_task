@@ -12,6 +12,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <my_controller/my_controller_Config.h>
 #include <control_toolbox/pid.h>
+#include "sensor_msgs/JointState.h"
 
 namespace my_controller_ns
 {
@@ -69,6 +70,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     f = boost::bind(&my_controller_ns::MyPositionController::callback, this, _1, _2);
     server->setCallback(f);
     pid_controller_.initPid(kp_, ki_, kd_, 10.0, 0.0);
+    target_speed_pub = n.advertise<sensor_msgs::JointState>("target_speed", 50);
 
     return true;
   }
@@ -97,7 +99,8 @@ class MyPositionController : public controller_interface::Controller<hardware_in
         target_speed = M_PI / 3;
         break;
     }
-    ROS_INFO("target_Speed: %f", target_speed);
+
+    //    ROS_INFO("target_Speed: %f", target_speed);
     // 计算PID控制器误差
     double error = target_speed - joint_.getVelocity();
     //    ROS_INFO("error: %f", error);
@@ -130,7 +133,12 @@ class MyPositionController : public controller_interface::Controller<hardware_in
         break;
     }
     // 设定电机控制量
+    sensor_msgs::JointState target_speed_msg;
+    target_speed_msg.name.push_back("my_joint");
+    target_speed_msg.velocity.push_back(target_speed);
     joint_.setCommand(command);
+    target_speed_pub.publish(target_speed_msg);
+
     //    ROS_INFO("command: %f", command);
     //    ROS_INFO("real_velocity: %f", joint_.getVelocity());
     //    ROS_INFO("........................");
@@ -192,6 +200,7 @@ private:
   dynamic_reconfigure::Server<my_controller::my_controller_Config>::CallbackType f;
   control_toolbox::Pid pid_controller_;
   double last_out = 0.0;
+  ros::Publisher target_speed_pub;
 };
 
 PLUGINLIB_EXPORT_CLASS(my_controller_ns::MyPositionController, controller_interface::ControllerBase);
