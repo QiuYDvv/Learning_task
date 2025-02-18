@@ -6,6 +6,8 @@
 ![1](https://github.com/QiuYDvv/picture/blob/master/1f.png?raw=true)
 ### 最终效果
 ![1](https://github.com/QiuYDvv/picture/blob/master/s.png?raw=true)
+### 实际电机效果
+![](https://github.com/QiuYDvv/picture/blob/master/r.png?raw=true)
 ## 2编写控制器的步骤
 ### 控制器代码中导出为插件PLUGINLIB_EXPORT_CLASS
 ### 编写插件描述文件
