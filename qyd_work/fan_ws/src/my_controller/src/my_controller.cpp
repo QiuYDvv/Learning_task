@@ -11,12 +11,13 @@
 #include <cmath>
 #include <dynamic_reconfigure/server.h>
 #include <my_controller/my_controller_Config.h>
+#include <control_toolbox/pid.h>
 
 namespace my_controller_ns
 {
-class MyPositionController : public controller_interface::Controller<hardware_interface::VelocityJointInterface>
+class MyPositionController : public controller_interface::Controller<hardware_interface::EffortJointInterface>
 {
-  bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& n)
+  bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle& n)
   {
     std::string my_joint;
     if (!n.getParam("joint", my_joint))
@@ -38,7 +39,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
 
     kp_ = 1.0;
     ki_ = 0.1;
-    kd_ = 0.05;
+    kd_ = 0.01;
     if (!n.getParam("pid/p", kp_))
     {
       ROS_ERROR("Could not find  p");
@@ -67,6 +68,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     server = std::make_unique<dynamic_reconfigure::Server<my_controller::my_controller_Config>>(n);
     f = boost::bind(&my_controller_ns::MyPositionController::callback, this, _1, _2);
     server->setCallback(f);
+    pid_controller_.initPid(kp_, ki_, kd_, 10.0, 0.0);
 
     return true;
   }
@@ -78,7 +80,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     // time_zero_ = time_zero_ + duration_time;
 
     // 获取目标速度（通过前馈控制）
-    ROS_INFO("p : %f", kp_);
+
     double target_speed;
     double pre_target_speed;
     time_zero_ = ros::Time::now();
@@ -95,32 +97,44 @@ class MyPositionController : public controller_interface::Controller<hardware_in
         target_speed = M_PI / 3;
         break;
     }
-
+    ROS_INFO("target_Speed: %f", target_speed);
     // 计算PID控制器误差
     double error = target_speed - joint_.getVelocity();
+    ROS_INFO("error: %f", error);
     integral_ += error * period.toSec();
+    ROS_INFO("integral: %f", integral_);
     double derivative = (error - prev_error_) / period.toSec();
+    ROS_INFO("derivative: %f", derivative);
     prev_error_ = error;
+    double new_out = pid_controller_.computeCommand(error, period);
+    ROS_INFO("new_out: %f", new_out);
+    pid_controller_.printValues();
 
     // 计算PID控制输出
     double pid_output = kp_ * error + ki_ * integral_ + kd_ * derivative;
+    ROS_INFO("pid_output: %f", pid_output);
 
     double feedforward_output;
     switch (use_feedforward)
     {
       case 0:
-        command = pid_output;
+        command = new_out;
         break;
       case 1:
         // 计算前馈控制量
-        feedforward_output = computeFeedforward(target_speed, pre_target_speed);
+        feedforward_output = computeFeedforward(new_out, last_out);
 
         // 结合前馈控制和PID输出，得到最终的命令
-        command = pid_output + feedforward_output;
+        command = new_out + feedforward_output;
+        ROS_INFO("feedforward_output: %f", feedforward_output);
         break;
     }
     // 设定电机控制量
     joint_.setCommand(command);
+    ROS_INFO("command: %f", command);
+    ROS_INFO("real_velocity: %f", joint_.getVelocity());
+    ROS_INFO("........................");
+    last_out = new_out;
   }
   double computeFeedforward(double target_speed, double pre_target_speed)
   {
@@ -141,7 +155,6 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     kp_ = config.p;
     ki_ = config.i;
     kd_ = config.d;
-    ROS_INFO("Reconfigure Request:  %f ", kp_);
   }
   void starting(const ros::Time& time)
   {
@@ -177,6 +190,8 @@ private:
   ros::Time prev_time;
   std::unique_ptr<dynamic_reconfigure::Server<my_controller::my_controller_Config>> server;
   dynamic_reconfigure::Server<my_controller::my_controller_Config>::CallbackType f;
+  control_toolbox::Pid pid_controller_;
+  double last_out = 0.0;
 };
 
 PLUGINLIB_EXPORT_CLASS(my_controller_ns::MyPositionController, controller_interface::ControllerBase);

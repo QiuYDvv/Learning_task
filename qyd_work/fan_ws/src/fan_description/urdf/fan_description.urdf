@@ -118,11 +118,11 @@
     <transmission name="pole_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <actuator name="pole_motors">
-            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
             <mechanicalReduction>1.0</mechanicalReduction>
         </actuator>
         <joint name="pole2joint">
-            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
     </transmission>
 
