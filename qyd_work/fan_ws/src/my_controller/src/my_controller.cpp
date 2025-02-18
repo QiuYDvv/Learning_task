@@ -100,19 +100,19 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     ROS_INFO("target_Speed: %f", target_speed);
     // 计算PID控制器误差
     double error = target_speed - joint_.getVelocity();
-    ROS_INFO("error: %f", error);
+    //    ROS_INFO("error: %f", error);
     integral_ += error * period.toSec();
-    ROS_INFO("integral: %f", integral_);
+    //    ROS_INFO("integral: %f", integral_);
     double derivative = (error - prev_error_) / period.toSec();
-    ROS_INFO("derivative: %f", derivative);
+    //    ROS_INFO("derivative: %f", derivative);
     prev_error_ = error;
     double new_out = pid_controller_.computeCommand(error, period);
-    ROS_INFO("new_out: %f", new_out);
+    //    ROS_INFO("new_out: %f", new_out);
     pid_controller_.printValues();
 
     // 计算PID控制输出
     double pid_output = kp_ * error + ki_ * integral_ + kd_ * derivative;
-    ROS_INFO("pid_output: %f", pid_output);
+    //    ROS_INFO("pid_output: %f", pid_output);
 
     double feedforward_output;
     switch (use_feedforward)
@@ -126,14 +126,14 @@ class MyPositionController : public controller_interface::Controller<hardware_in
 
         // 结合前馈控制和PID输出，得到最终的命令
         command = new_out + feedforward_output;
-        ROS_INFO("feedforward_output: %f", feedforward_output);
+        //        ROS_INFO("feedforward_output: %f", feedforward_output);
         break;
     }
     // 设定电机控制量
     joint_.setCommand(command);
-    ROS_INFO("command: %f", command);
-    ROS_INFO("real_velocity: %f", joint_.getVelocity());
-    ROS_INFO("........................");
+    //    ROS_INFO("command: %f", command);
+    //    ROS_INFO("real_velocity: %f", joint_.getVelocity());
+    //    ROS_INFO("........................");
     last_out = new_out;
   }
   double computeFeedforward(double target_speed, double pre_target_speed)
