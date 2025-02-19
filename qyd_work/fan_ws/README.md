@@ -7,7 +7,7 @@
 ### 最终效果
 ![1](https://github.com/QiuYDvv/picture/blob/master/2025-02-19%2011-49-40%20%E7%9A%84%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE.png?raw=true)
 ### 实际电机效果
-![](https://github.com/QiuYDvv/picture/blob/master/r.png?raw=true)
+![](https://github.com/QiuYDvv/picture/blob/master/2025-02-19%2017-36-13%20%E7%9A%84%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE.png?raw=true)
 ## 2编写控制器的步骤
 ### 控制器代码中导出为插件PLUGINLIB_EXPORT_CLASS
 ### 编写插件描述文件
