@@ -1,17 +1,19 @@
 //
 // Created by qyd on 25-2-13.
 //
-#include "ros/ros.h"
+#include <control_toolbox/pid.h>
 #include <controller_interface/controller.h>
+#include <dynamic_reconfigure/server.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <my_controller/my_controller_Config.h>
 #include <pluginlib/class_list_macros.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int64.h>  // 确保包含了该头文件
-#include <random>
+
 #include <cmath>
-#include <dynamic_reconfigure/server.h>
-#include <my_controller/my_controller_Config.h>
-#include <control_toolbox/pid.h>
+#include <random>
+
+#include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 
 namespace my_controller_ns
@@ -38,9 +40,9 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     }
     joint_ = hw->getHandle(my_joint);  // throws on failure
 
-    kp_ = 1.0;
-    ki_ = 0.1;
-    kd_ = 0.01;
+    kp_ = 50.0;
+    ki_ = 0.4;
+    kd_ = 0.05;
     if (!n.getParam("pid/p", kp_))
     {
       ROS_ERROR("Could not find  p");
@@ -70,7 +72,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     f = boost::bind(&my_controller_ns::MyPositionController::callback, this, _1, _2);
     server->setCallback(f);
     pid_controller_.initPid(kp_, ki_, kd_, 10.0, 0.0);
-    target_speed_pub = n.advertise<sensor_msgs::JointState>("target_speed", 50);
+    target_speed_pub = n.advertise<std_msgs::Float64>("target_speed", 50);
 
     return true;
   }
@@ -82,7 +84,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     // time_zero_ = time_zero_ + duration_time;
 
     // 获取目标速度（通过前馈控制）
-
+    pid_controller_.setGains(kp_, ki_, kd_, 10.0, 0.0);
     double target_speed;
     double pre_target_speed;
     time_zero_ = ros::Time::now();
@@ -93,7 +95,6 @@ class MyPositionController : public controller_interface::Controller<hardware_in
         target_speed = computeTargetSpeed(time_zero_.toSec());
         pre_target_speed = computeTargetSpeed(prev_time.toSec());
 
-        prev_time = time_zero_;
         break;
       case 1:
         target_speed = M_PI / 3;
@@ -129,13 +130,15 @@ class MyPositionController : public controller_interface::Controller<hardware_in
 
         // 结合前馈控制和PID输出，得到最终的命令
         command = new_out + feedforward_output;
+        ROS_INFO("feedforward output: %f", feedforward_output);
         //        ROS_INFO("feedforward_output: %f", feedforward_output);
         break;
     }
     // 设定电机控制量
-    sensor_msgs::JointState target_speed_msg;
-    target_speed_msg.name.push_back("my_joint");
-    target_speed_msg.velocity.push_back(target_speed);
+    std_msgs::Float64 target_speed_msg;
+    //    target_speed_msg.name.push_back("my_joint");
+    //    target_speed_msg.velocity.push_back(target_speed);
+    target_speed_msg.data = target_speed;
     joint_.setCommand(command);
     target_speed_pub.publish(target_speed_msg);
 
@@ -143,6 +146,7 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     //    ROS_INFO("real_velocity: %f", joint_.getVelocity());
     //    ROS_INFO("........................");
     last_out = new_out;
+    prev_time = time_zero_;
   }
   double computeFeedforward(double target_speed, double pre_target_speed)
   {
@@ -163,9 +167,11 @@ class MyPositionController : public controller_interface::Controller<hardware_in
     kp_ = config.p;
     ki_ = config.i;
     kd_ = config.d;
+    feedforward_gain_ = config.feedforward_gain_;
   }
   void starting(const ros::Time& time)
   {
+    last_out = 0;
     time_zero_ = ros::Time::now();
     prev_time = ros::Time::now();
   }
@@ -199,7 +205,7 @@ private:
   std::unique_ptr<dynamic_reconfigure::Server<my_controller::my_controller_Config>> server;
   dynamic_reconfigure::Server<my_controller::my_controller_Config>::CallbackType f;
   control_toolbox::Pid pid_controller_;
-  double last_out = 0.0;
+  double last_out;
   ros::Publisher target_speed_pub;
 };
 
